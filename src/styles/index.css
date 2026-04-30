@@ -1,14 +1,9 @@
-@config "../../tailwind.config.js";
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../tailwind.config.js";
 
 @layer base {
   body {
-    @apply bg-base-light text-text-mainLight transition-colors duration-300;
-  }
-  .dark body {
-    @apply bg-base-dark text-text-mainDark;
+    @apply bg-base-dark text-text-mainDark antialiased;
   }
 }
