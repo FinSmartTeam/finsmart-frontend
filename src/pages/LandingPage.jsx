@@ -18,20 +18,20 @@ const LandingPage = ({ onStart }) => {
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] -z-10"></div>
         
         <div className="space-y-6">
-          <h2 className="text-5xl font-black leading-[1] tracking-tight uppercase">
+          <h2 className="text-5xl font-black leading-none tracking-tight uppercase">
             Revolusi Keuangan <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent-dark">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-accent-dark">
               Generasi Muda
             </span>
           </h2>
-          <p className="text-sm text-text-mutedDark leading-relaxed max-w-[280px] mx-auto font-medium">
+          <p className="text-sm text-text-mutedDark leading-relaxed max-w-280px mx-auto font-medium">
             Kuasai finansialmu dengan asisten AI cerdas, personal, dan berkelanjutan.
           </p>
         </div>
         
         <button 
           onClick={onStart}
-          className="w-full max-w-[280px] bg-primary text-white font-black py-4.5 rounded-2xl shadow-[0_15px_35px_rgba(22,128,255,0.3)] active:scale-95 transition-all uppercase tracking-widest text-xs"
+          className="w-full max-w-280px bg-primary text-white font-black py-4.5 rounded-2xl shadow-[0_15px_35px_rgba(22,128,255,0.3)] active:scale-95 transition-all uppercase tracking-widest text-xs"
         >
           Mulai Sekarang
         </button>
@@ -41,10 +41,10 @@ const LandingPage = ({ onStart }) => {
       <section className="px-6 py-14 bg-card-dark/30 border-y border-white/5">
         <div className="space-y-5">
           <div className="flex items-center gap-2">
-             <div className="w-8 h-[1px] bg-danger-dark"></div>
+             <div className="w-8 h-px bg-danger-dark"></div>
              <h3 className="text-[10px] font-black text-danger-dark uppercase tracking-[0.3em]">The Problem</h3>
           </div>
-          <div className="p-6 bg-gradient-to-br from-card-dark to-base-dark border border-white/5 rounded-3xl">
+          <div className="p-6 bg-linear-to-br from-card-dark to-base-dark border border-white/5 rounded-3xl">
             <p className="text-sm leading-relaxed font-medium">
               Literasi keuangan pemuda masih di bawah <span className="text-danger-dark font-bold underline decoration-2">50%</span>. Saatnya berhenti terjebak dalam <span className="italic">lifestyle inflation</span>.
             </p>
@@ -86,7 +86,7 @@ const LandingPage = ({ onStart }) => {
           <p className="text-[10px] uppercase tracking-[0.4em] text-text-mutedDark font-black">Official Partner</p>
           <div className="flex flex-col items-center gap-2">
             <p className="text-xs font-bold tracking-tight">DBS Foundation | Coding Camp 2026</p>
-            <div className="w-12 h-[2px] bg-primary/30"></div>
+            <div className="w-12 h-0.5 bg-primary/30"></div>
           </div>
         </div>
         
