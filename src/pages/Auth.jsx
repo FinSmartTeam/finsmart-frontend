@@ -82,9 +82,9 @@ const Auth = ({ onAuthSuccess }) => {
 
         {/* Divider */}
         <div className="flex items-center my-8 gap-4">
-          <div className="flex-1 h-[1px] bg-white/5"></div>
+          <div className="flex-1 h-px bg-white/5"></div>
           <span className="text-[10px] font-black text-text-mutedDark uppercase tracking-widest">Atau</span>
-          <div className="flex-1 h-[1px] bg-white/5"></div>
+          <div className="flex-1 h-px bg-white/5"></div>
         </div>
 
         {/* Google Button */}
