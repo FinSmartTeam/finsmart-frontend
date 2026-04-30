@@ -1,10 +1,27 @@
+import { useState } from 'react';
+import LandingPage from './pages/LandingPage';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+
 function App() {
+  // status: 'landing' | 'auth' | 'dashboard'
+  const [currentPage, setCurrentPage] = useState('landing');
+
   return (
-    <div className="h-screen flex items-center justify-center bg-base-dark">
-      <h1 className="text-4xl font-bold text-accent-dark">
-        FinSmart is Ready!
-      </h1>
+    <div className="min-h-screen bg-base-dark">
+      {currentPage === 'landing' && (
+        <LandingPage onStart={() => setCurrentPage('auth')} />
+      )}
+
+      {currentPage === 'auth' && (
+        <Auth onAuthSuccess={() => setCurrentPage('dashboard')} />
+      )}
+
+      {currentPage === 'dashboard' && (
+        <Dashboard />
+      )}
     </div>
-  )
+  );
 }
-export default App
+
+export default App;
