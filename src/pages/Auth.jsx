@@ -1,19 +1,99 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User, AtSign, KeyRound } from 'lucide-react';
 import logo from '../assets/logo.svg';
+import api from '../services/api';
 
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-
-const Auth = ({ onAuthSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const Auth = () => {
+  const navigate = useNavigate();
+  // Status: 'login', 'register', 'activation'
+  const [authMode, setAuthMode] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    otpCode: '',
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrorMessage(''); 
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      if (authMode === 'register') {
+        // --- PROSES REGISTER ---
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Konfirmasi kata sandi tidak cocok.');
+        }
+        
+        await api.post('/auth/register', {
+          fullName: formData.fullName,
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        });
+        
+        // move ke mode aktivasi jika register berhasil
+        setAuthMode('activation');
+        
+      } else if (authMode === 'activation') {
+        // --- PROSES AKTIVASI OTP ---
+        await api.post('/auth/activation', {
+          email: formData.email,
+          code: formData.otpCode
+        });
+        
+        // move ke mode login setelah aktivasi berhasil
+        setAuthMode('login');
+        setFormData({ ...formData, password: '', confirmPassword: '', otpCode: '' });
+        alert('Aktivasi berhasil! Silakan login.');
+        
+      } else if (authMode === 'login') {
+        // --- PROSES LOGIN ---
+        const response = await api.post('/auth/login', {
+          email: formData.email,
+          password: formData.password
+        });
+        
+        const token = response.data?.token || response.data?.data?.token;
+        
+        if (token) {
+          localStorage.setItem('finSmart_token', token);
+          navigate('/dashboard');
+        } else {
+          throw new Error('Token tidak diterima dari server.');
+        }
+      }
+    } catch (error) {
+      console.error('Error Authentication:', error);
+      
+      setErrorMessage(error.response?.data?.message || error.message || 'Terjadi kesalahan sistem.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-base-dark text-text-mainDark font-sans flex md:grid md:grid-cols-2">
       
-      {/* --- BRANDING (Desktop Only) --- */}
+      {/* Branding Area Desktop */}
       <div className="hidden md:flex flex-col justify-center px-20 bg-card-dark/30 border-r border-white/5">
         <div className="max-w-md space-y-6">
-          <img src={logo} alt="FinSmart" className="h-10 mb-8" />
+          <img src={logo} alt="FinSmart" className="h-10 mb-8 cursor-pointer" onClick={() => navigate('/')} />
           <h2 className="text-5xl font-extrabold text-white leading-tight">
             Kelola Keuangan <br />
             <span className="text-primary text-4xl font-medium">Tanpa Ribet.</span>
@@ -21,68 +101,94 @@ const Auth = ({ onAuthSuccess }) => {
           <p className="text-text-mutedDark text-lg leading-relaxed">
             Mulai langkah cerdasmu hari ini. Bergabung dengan komunitas yang melek finansial dengan bantuan teknologi AI.
           </p>
-          <div className="pt-8 flex items-center gap-4">
-             <div className="w-10 h-px bg-primary/50"></div>
-             <span className="text-[10px] uppercase tracking-[0.3em] text-text-mutedDark font-bold">FinSmart Protocol v1.0</span>
-          </div>
         </div>
       </div>
 
-      {/* --- FORMULIR --- */}
+      {/* Area Form */}
       <div className="flex-1 flex items-center justify-center px-8 py-10 bg-base-dark">
         <div className="w-full max-w-90 space-y-8">
           
           <div className="text-center space-y-2">
-            <img src={logo} alt="FinSmart" className="h-8 mx-auto mb-6 md:hidden" />
             <h3 className="text-2xl font-bold text-white tracking-tight">
-              {isLogin ? 'Selamat Datang' : 'Daftar Akun'}
+              {authMode === 'login' && 'Selamat Datang'}
+              {authMode === 'register' && 'Daftar Akun'}
+              {authMode === 'activation' && 'Aktivasi Akun'}
             </h3>
             <p className="text-sm text-text-mutedDark">
-              {isLogin ? 'Masukkan kredensial akun Anda.' : 'Lengkapi data untuk akses penuh sistem.'}
+              {authMode === 'login' && 'Masukkan email dan sandi Anda.'}
+              {authMode === 'register' && 'Lengkapi data untuk akses penuh.'}
+              {authMode === 'activation' && 'Masukkan 6 digit OTP yang dikirim ke email Anda.'}
             </p>
           </div>
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            {!isLogin && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-primary uppercase ml-1 tracking-widest">Nama Lengkap</label>
+          {/* Alert Error */}
+          {errorMessage && (
+            <div className="bg-danger-dark/20 border border-danger-dark/50 text-danger-dark p-3 rounded-lg text-sm text-center">
+              {errorMessage}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            
+            {/* --- INPUTS UNTUK REGISTER --- */}
+            {authMode === 'register' && (
+              <>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
                   <input 
                     type="text" 
-                    placeholder="Nama Lengkap Anda" 
-                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Nama Lengkap" 
+                    required
+                    className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
                   />
                 </div>
-              </div>
+                <div className="relative">
+                  <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                  <input 
+                    type="text" 
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="Username" 
+                    required
+                    className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                  />
+                </div>
+              </>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-primary uppercase ml-1 tracking-widest">Alamat Email</label>
+            {/* --- INPUT EMAIL (Untuk Login & Register) --- */}
+            {authMode !== 'activation' && (
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
                 <input 
                   type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="nama@email.com" 
-                  className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
                 />
               </div>
-            </div>
+            )}
 
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] font-bold text-primary uppercase tracking-widest">Kata Sandi</label>
-                {isLogin && <a href="#" className="text-[10px] text-text-mutedDark hover:text-primary transition-colors">Lupa?</a>}
-              </div>
-              
+            {/* --- INPUTS UNTUK PASSWORD (Login & Register) --- */}
+            {authMode !== 'activation' && (
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
-                  className="w-full pl-11 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Kata Sandi" 
+                  required
+                  className="w-full pl-11 pr-12 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
                 />
-                {/* Tombol Icon Show/Hide */}
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -91,42 +197,77 @@ const Auth = ({ onAuthSuccess }) => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-            </div>
+            )}
 
+            {/* --- INPUT KONFIRMASI PASSWORD (Hanya Register) --- */}
+            {authMode === 'register' && (
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                <input 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Konfirmasi Kata Sandi" 
+                  required
+                  className="w-full pl-11 pr-12 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                />
+                 <button 
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-mutedDark hover:text-white transition-colors cursor-pointer"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            )}
+
+            {/* --- INPUT OTP (Hanya Aktivasi) --- */}
+            {authMode === 'activation' && (
+              <div className="relative">
+                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                <input 
+                  type="text" 
+                  name="otpCode"
+                  value={formData.otpCode}
+                  onChange={handleChange}
+                  placeholder="Masukkan 6 Digit OTP" 
+                  maxLength="6"
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-center tracking-[0.5em] font-bold text-lg text-white outline-none focus:border-primary transition-all"
+                />
+              </div>
+            )}
+
+            {/* Tombol Submit */}
             <button 
-              onClick={onAuthSuccess}
-              className="w-full bg-primary text-white font-bold py-4 rounded-xl mt-4 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all text-sm cursor-pointer"
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-primary text-white font-bold py-3.5 rounded-xl mt-4 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all text-sm cursor-pointer disabled:opacity-50"
             >
-              {isLogin ? 'Masuk ke Sistem' : 'Buat Akun Sekarang'}
+              {isLoading ? 'Memproses...' : (
+                authMode === 'login' ? 'Masuk' : 
+                authMode === 'register' ? 'Buat Akun' : 'Verifikasi OTP'
+              )}
             </button>
           </form>
 
-          {/* Divider & Social */}
-          <div className="flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-white/5"></div>
-            <span className="text-[9px] text-text-mutedDark uppercase tracking-widest font-bold">Atau</span>
-            <div className="flex-1 h-px bg-white/5"></div>
-          </div>
-
-          <div className="space-y-6">
-            <button className="w-full bg-transparent text-white border border-white/10 font-medium py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-white/5 transition-all text-xs cursor-pointer">
-              <img src="https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png" className="w-4 h-4" alt="Google" />
-              Lanjutkan dengan Google
-            </button>
-
-            <p className="text-center text-xs text-text-mutedDark">
-              {isLogin ? "Belum punya akun? " : "Sudah memiliki akun? "}
+          {/* Toggle Login/Register */}
+          {authMode !== 'activation' && (
+            <p className="text-center text-xs text-text-mutedDark mt-6">
+              {authMode === 'login' ? "Belum punya akun? " : "Sudah memiliki akun? "}
               <span 
                 onClick={() => {
-                  setIsLogin(!isLogin);
-                  setShowPassword(false);
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setErrorMessage('');
                 }}
                 className="text-primary font-bold cursor-pointer hover:underline"
               >
-                {isLogin ? 'Daftar Gratis' : 'Masuk di sini'}
+                {authMode === 'login' ? 'Daftar Gratis' : 'Masuk di sini'}
               </span>
             </p>
-          </div>
+          )}
+
         </div>
       </div>
     </div>
