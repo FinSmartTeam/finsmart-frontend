@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, AtSign, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, KeyRound } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import api from '../services/api';
 
@@ -15,7 +15,6 @@ const Auth = () => {
 
   const [formData, setFormData] = useState({
     fullName: '',
-    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -34,54 +33,55 @@ const Auth = () => {
 
     try {
       if (authMode === 'register') {
-        // --- PROSES REGISTER ---
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Konfirmasi kata sandi tidak cocok.');
         }
-        
-        await api.post('/auth/register', {
+
+        const response = await api.post('/auth/register', {
           fullName: formData.fullName,
-          username: formData.username,
           email: formData.email,
           password: formData.password,
           confirmPassword: formData.confirmPassword
         });
         
-        // move ke mode aktivasi jika register berhasil
+        alert(response.data?.message || 'Registrasi sukses! Silakan cek email Anda untuk kode OTP.');
         setAuthMode('activation');
         
       } else if (authMode === 'activation') {
-        // --- PROSES AKTIVASI OTP ---
         await api.post('/auth/activation', {
           email: formData.email,
           code: formData.otpCode
         });
         
-        // move ke mode login setelah aktivasi berhasil
         setAuthMode('login');
         setFormData({ ...formData, password: '', confirmPassword: '', otpCode: '' });
-        alert('Aktivasi berhasil! Silakan login.');
+        alert('Akun Anda berhasil diaktivasi! Silakan login.');
         
       } else if (authMode === 'login') {
-        // --- PROSES LOGIN ---
         const response = await api.post('/auth/login', {
           email: formData.email,
           password: formData.password
         });
-        
-        const token = response.data?.token || response.data?.data?.token;
+
+        const token = response.data?.data?.token || response.data?.token; // Fallback jika struktur berbeda
         
         if (token) {
           localStorage.setItem('finSmart_token', token);
           navigate('/dashboard');
         } else {
-          throw new Error('Token tidak diterima dari server.');
+          throw new Error('Gagal mengambil token otorisasi dari server.');
         }
       }
     } catch (error) {
       console.error('Error Authentication:', error);
       
-      setErrorMessage(error.response?.data?.message || error.message || 'Terjadi kesalahan sistem.');
+      const yupValidationMessage = error.response?.data?.error?.errors?.[0];
+      const backendMetaMessage = error.response?.data?.meta?.message;
+      const generalMessage = error.response?.data?.message;
+
+      const finalErrorMessage = yupValidationMessage || backendMetaMessage || generalMessage || 'Terjadi kesalahan koneksi sistem.';
+      
+      setErrorMessage(finalErrorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -132,35 +132,21 @@ const Auth = () => {
             
             {/* --- INPUTS UNTUK REGISTER --- */}
             {authMode === 'register' && (
-              <>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
-                  <input 
-                    type="text" 
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Nama Lengkap" 
-                    required
-                    className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
-                  />
-                </div>
-                <div className="relative">
-                  <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
-                  <input 
-                    type="text" 
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    placeholder="Username" 
-                    required
-                    className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
-                  />
-                </div>
-              </>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                <input 
+                  type="text" 
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Nama Lengkap" 
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary transition-all"
+                />
+              </div>
             )}
 
-            {/* --- INPUT EMAIL (Untuk Login & Register) --- */}
+            {/* --- INPUT EMAIL (Login & Register) --- */}
             {authMode !== 'activation' && (
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
@@ -176,7 +162,7 @@ const Auth = () => {
               </div>
             )}
 
-            {/* --- INPUTS UNTUK PASSWORD (Login & Register) --- */}
+            {/* --- INPUT PASSWORD (Login & Register) --- */}
             {authMode !== 'activation' && (
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
@@ -199,7 +185,7 @@ const Auth = () => {
               </div>
             )}
 
-            {/* --- INPUT KONFIRMASI PASSWORD (Hanya Register) --- */}
+            {/* --- INPUT KONFIRMASI PASSWORD (Register) --- */}
             {authMode === 'register' && (
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
@@ -222,7 +208,7 @@ const Auth = () => {
               </div>
             )}
 
-            {/* --- INPUT OTP (Hanya Aktivasi) --- */}
+            {/* --- INPUT OTP (Aktivasi) --- */}
             {authMode === 'activation' && (
               <div className="relative">
                 <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
