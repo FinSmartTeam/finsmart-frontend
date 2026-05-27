@@ -4,248 +4,381 @@ import {
   LayoutDashboard, 
   BarChart3, 
   Wallet, 
-  Settings, 
   LogOut, 
   Plus, 
-  ArrowUpRight, 
-  ArrowDownLeft,
-  Bot,
-  X
+  UserCircle,
+  X,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  FileText
 } from 'lucide-react';
-import logo from '../assets/logo.svg'; // Import logo
+import logo from '../assets/logo.svg';
+import api from '../services/api';
 
-const Dashboard = () => {
+import HomeTab from '../components/dashboard/HomeTab';
+import StatsTab from '../components/dashboard/StatsTab';
+import VaultTab from '../components/dashboard/VaultTab';
+
+const Dashboard = ({ onLogout }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [modalSuccess, setModalSuccess] = useState('');
+  const [modalError, setModalError] = useState('');
+
+  const [userProfile, setUserProfile] = useState({ fullName: 'Pengguna FinSmart', email: '' }); 
   const [transactions, setTransactions] = useState([]); 
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [vaults, setVaults] = useState([]); 
+  const [financialSummary, setFinancialSummary] = useState({
+    totalSaldo: 0,
+    totalPemasukan: 0,
+    totalPengeluaran: 0
+  });
 
-  // Perbaikan Error: Gunakan pola fetch data (simulasi)
-  useEffect(() => {
-    const fetchInitialData = () => {
-      // Nanti ini diganti dengan pemanggilan API (axios.get)
-      const dataDariServer = []; 
-      setTransactions(dataDariServer);
-      
-      // Munculkan modal HANYA jika data yang ditarik kosong
-      if (dataDariServer.length === 0) {
-        setShowWelcomeModal(true);
+  const [newTransaction, setNewTransaction] = useState({
+    description: '',
+    amount: '',
+    type: 'expense',
+    date: new Date().toISOString().split('T')[0] 
+  });
+
+  const fetchAllDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      try {
+        const profileRes = await api.get('/auth/me'); 
+        if (profileRes.data) setUserProfile(profileRes.data.data || profileRes.data || { fullName: 'User FinSmart' });
+      } catch (err) {
+        console.warn("Menggunakan data token untuk profil.");
       }
-    };
 
-    fetchInitialData();
-  }, []); // Array kosong berarti hanya dijalankan 1x saat halaman dimuat
+      const transactionsRes = await api.get('/transactions');
+      const txData = transactionsRes.data?.data || transactionsRes.data || [];
+      setTransactions(Array.isArray(txData) ? txData : []);
 
-  const handleLogout = () => {
+      try {
+        const dashboardRes = await api.get('/dashboard');
+        const dbData = dashboardRes.data?.data || dashboardRes.data || {};
+        
+        setFinancialSummary({
+          totalSaldo: dbData.totalBalance ?? dbData.balance ?? dbData.totalSaldo ?? 0,
+          totalPemasukan: dbData.totalIncome ?? dbData.income ?? dbData.totalPemasukan ?? 0,
+          totalPengeluaran: dbData.totalExpense ?? dbData.expense ?? dbData.totalPengeluaran ?? 0
+        });
+      } catch (dbErr) {
+        let incomeCalc = 0, expenseCalc = 0;
+        if (Array.isArray(txData)) {
+          txData.forEach(tx => {
+            if (tx && tx.type === 'income') incomeCalc += Number(tx.amount || 0);
+            else if (tx) expenseCalc += Number(tx.amount || 0);
+          });
+        }
+        setFinancialSummary({
+          totalSaldo: incomeCalc - expenseCalc,
+          totalPemasukan: incomeCalc,
+          totalPengeluaran: expenseCalc
+        });
+      }
+
+      try {
+        const budgetsRes = await api.get('/budgets'); 
+        const bData = budgetsRes.data?.data || budgetsRes.data || [];
+        setVaults(Array.isArray(bData) ? bData : []);
+      } catch (bErr) {
+        console.warn("Endpoint budgets belum siap.");
+      }
+
+    } catch (error) {
+      console.error("Gagal sinkronisasi:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllDashboardData();
+  }, []);
+
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    if (!newTransaction.description || !newTransaction.amount || !newTransaction.date) return;
+
+    setModalError('');
+    setModalSuccess('');
+    setIsLoading(true);
+
+    try {
+      await api.post('/transactions', {
+        description: newTransaction.description,
+        amount: Number(newTransaction.amount),
+        type: newTransaction.type,
+        date: new Date(newTransaction.date).toISOString() 
+      });
+
+      setModalSuccess('Berhasil disimpan ke database!');
+      
+      setTimeout(async () => {
+        setNewTransaction({ 
+          description: '', 
+          amount: '', 
+          type: 'expense', 
+          date: new Date().toISOString().split('T')[0] 
+        });
+        setShowAddModal(false);
+        setModalSuccess('');
+        await fetchAllDashboardData();
+      }, 1500);
+
+    } catch (error) {
+      console.error("Gagal menambah transaksi:", error);
+      setModalError(error.response?.data?.message || 'Gagal mengirim data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogoutAction = () => {
     localStorage.removeItem('finSmart_token');
-    navigate('/auth');
+    if (onLogout) onLogout();
+    else navigate('/auth');
   };
 
   const menuItems = [
-    { id: 'home', label: 'Home', icon: LayoutDashboard },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'stats', label: 'Statistik', icon: BarChart3 },
     { id: 'vault', label: 'Vault', icon: Wallet },
-    { id: 'finbot', label: 'FinBot', icon: Bot }, 
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen bg-base-dark text-text-mainDark font-sans flex flex-col md:flex-row relative">
+    <div className="min-h-screen bg-base-dark text-text-mainDark flex font-sans selection:bg-primary selection:text-text-mainDark">
       
-      {/* --- SIDEBAR DESKTOP --- */}
-      <aside className="hidden md:flex flex-col w-64 bg-card-dark/50 border-r border-white/5 p-6 justify-between sticky top-0 h-screen">
+      {/* SIDEBAR DESKTOP */}
+      <aside className="w-64 bg-card-dark border-r border-border-dark p-6 flex flex-col justify-between hidden md:flex shrink-0">
         <div className="space-y-8">
-          <div className="px-2">
-            {/* Menggunakan Logo SVG */}
-            <img src={logo} alt="FinSmart Logo" className="h-7 object-contain" />
+          <div className="flex items-center gap-3 pl-2">
+            <img src={logo} alt="FinSmart Logo" className="h-6 object-contain" />
           </div>
 
           <nav className="space-y-1.5">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-                    activeTab === item.id 
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                      : 'text-text-mutedDark hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <Icon size={18} />
-                  {item.label}
-                </button>
-              );
-            })}
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                  activeTab === item.id 
+                    ? 'bg-primary text-text-mainDark shadow-lg shadow-primary/20' 
+                    : 'text-text-mutedDark hover:bg-white/5 hover:text-text-mainDark'
+                }`}
+              >
+                <item.icon size={18} />
+                {item.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-bold text-danger-dark hover:bg-danger-dark/10 transition-all cursor-pointer w-full"
-        >
-          <LogOut size={18} />
-          Keluar Sistem
-        </button>
+        <div className="pt-6 border-t border-border-dark space-y-4">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <UserCircle size={20} />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-sm font-semibold text-text-mainDark truncate">{userProfile?.fullName || 'User FinSmart'}</p>
+              <p className="text-xs text-text-mutedDark truncate">{userProfile?.email || 'Online'}</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleLogoutAction}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-danger-light hover:bg-danger-light/10 rounded-xl transition-all cursor-pointer"
+          >
+            <LogOut size={18} />
+            Keluar Sesi
+          </button>
+        </div>
       </aside>
 
-      {/* --- HEADER MOBILE --- */}
-      <header className="md:hidden p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-base-dark/80 backdrop-blur-md z-40">
-        {/* Menggunakan Logo SVG */}
-        <img src={logo} alt="FinSmart Logo" className="h-5 object-contain" />
-        
-        {/* Tombol Input Transaksi Mobile */}
-        <button className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/20 active:scale-95 transition-transform cursor-pointer">
-          <Plus size={18} />
-        </button>
-      </header>
-
-      {/* --- AREA KONTEN UTAMA --- */}
-      <main className="flex-1 p-5 md:p-10 pb-28 md:pb-10 overflow-y-auto">
-        
-        {/* Header Konten Desktop */}
-        <div className="hidden md:flex justify-between items-center mb-8">
+      {/* WORKSPACE UTAMA */}
+      <main className="flex-1 p-6 md:p-10 space-y-6 overflow-y-auto max-h-screen pb-24 md:pb-10">
+        <div className="flex justify-between items-center border-b border-border-dark pb-4">
           <div>
-            <h2 className="text-2xl font-bold text-white capitalize">{activeTab}</h2>
-            <p className="text-sm text-text-mutedDark">Sistem pemantauan keuangan personal berbasis AI.</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-black text-text-mainDark tracking-tight">
+                {activeTab === 'home' && 'Ringkasan Finansial'}
+                {activeTab === 'stats' && 'Laporan & Tren AI'}
+                {activeTab === 'vault' && 'Pusat Alokasi Anggaran'}
+              </h2>
+              <span className="text-[9px] bg-primary/10 border border-primary/20 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-wide flex items-center gap-1">
+                <Sparkles size={8} /> LIVE
+              </span>
+            </div>
           </div>
-          <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-primary/10">
-            <Plus size={16} /> Transaksi Baru
+
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-primary hover:bg-primary/90 text-text-mainDark px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-lg shadow-primary/20 active:scale-95 transition-all shrink-0"
+          >
+            <Plus size={16} /> <span className="hidden sm:inline">Transaksi Baru</span>
           </button>
         </div>
 
-        {activeTab === 'home' && (
-          <div className="space-y-6">
-            {/* 3 Kartu Ringkasan */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-6 bg-card-dark border border-white/5 rounded-2xl space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Total Saldo</span>
-                  <Wallet className="text-primary" size={20} />
-                </div>
-                <p className="text-2xl font-black text-white">Rp 0</p>
-              </div>
-              <div className="p-6 bg-card-dark border border-white/5 rounded-2xl space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Pemasukan</span>
-                  <ArrowUpRight className="text-emerald-500" size={20} />
-                </div>
-                <p className="text-2xl font-black text-white">Rp 0</p>
-              </div>
-              <div className="p-6 bg-card-dark border border-white/5 rounded-2xl space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Pengeluaran</span>
-                  <ArrowDownLeft className="text-danger-dark" size={20} />
-                </div>
-                <p className="text-2xl font-black text-white">Rp 0</p>
-              </div>
-            </div>
-
-            {/* Grid Blok Bawah */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Blok Grafik Kiri */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="p-10 bg-card-dark border border-white/5 rounded-3xl text-center min-h-75 flex flex-col justify-center items-center space-y-2">
-                  <BarChart3 size={36} className="text-text-mutedDark opacity-40 mb-2" />
-                  <p className="text-white font-bold">Visualisasi Statistik & Grafik Tren</p>
-                  <p className="text-text-mutedDark text-xs max-w-xs">Komponen visual grafik akan dirender di sini saat data tersedia.</p>
-                </div>
-              </div>
-
-              {/* Blok Daftar Transaksi Kanan */}
-              <div className="p-6 bg-card-dark/80 border border-white/5 rounded-3xl min-h-75 flex flex-col">
-                <h4 className="text-sm font-bold text-white mb-4 border-b border-white/5 pb-3">Riwayat Transaksi</h4>
-                <div className="flex-1 flex items-center justify-center">
-                  {transactions.length === 0 ? (
-                    <p className="text-xs text-text-mutedDark text-center italic">Belum ada transaksi tercatat.</p>
-                  ) : (
-                    <ul className="w-full space-y-3">
-                      {/* Mapping data transaksi */}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* LOADING STATE AMAN & RENDER KONTEN TAB */}
+        {isLoading && transactions.length === 0 ? (
+          <div className="min-h-[350px] flex flex-col justify-center items-center space-y-3 animate-pulse">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-text-mutedDark">Sinkronisasi Database...</p>
           </div>
-        )}
-
-        {activeTab !== 'home' && (
-          <div className="p-12 bg-card-dark border border-dashed border-white/10 rounded-3xl text-center">
-            <p className="text-text-mutedDark text-sm">Modul halaman <span className="text-white font-bold capitalize">{activeTab}</span> sedang dalam persiapan.</p>
-          </div>
+        ) : (
+          activeTab === 'home' ? <HomeTab transactions={transactions} totalSaldo={financialSummary.totalSaldo} totalPemasukan={financialSummary.totalPemasukan} totalPengeluaran={financialSummary.totalPengeluaran} /> :
+          activeTab === 'stats' ? <StatsTab summaryStats={financialSummary} categoryStats={transactions} /> :
+          <VaultTab vaults={vaults} />
         )}
       </main>
 
-      {/* --- MODAL INPUT TRANSAKSI (ONBOARDING) --- */}
-      {showWelcomeModal && (
-        <div className="fixed inset-0 bg-base-dark/95 backdrop-blur-sm z-100 flex items-center justify-center p-6">
-          <div className="bg-card-dark border border-white/10 p-8 rounded-4xl shadow-2xl max-w-md w-full relative">
+      {/* BOTTOM NAV MOBILE */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card-dark/95 backdrop-blur-xl border-t border-border-dark px-6 py-3 flex justify-between items-center z-40 md:hidden">
+        {menuItems.map((item) => (
+          <button 
+            key={item.id} 
+            onClick={() => setActiveTab(item.id)} 
+            className={`flex flex-col items-center gap-1 cursor-pointer transition-colors ${activeTab === item.id ? 'text-primary' : 'text-text-mutedDark'}`}
+          >
+            <item.icon size={20} />
+            <span className="text-[9px] font-black uppercase tracking-wider">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* MODAL POP-UP TRANSAKSI */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-base-dark/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card-dark border border-border-dark rounded-3xl w-full max-w-lg p-6 md:p-8 relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl">
             <button 
-              onClick={() => setShowWelcomeModal(false)}
-              className="absolute top-6 right-6 text-text-mutedDark hover:text-white cursor-pointer"
+              onClick={() => { setShowAddModal(false); setModalError(''); setModalSuccess(''); }}
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-base-dark rounded-full text-text-mutedDark hover:text-text-mainDark transition-colors cursor-pointer"
             >
-              <X size={20} />
+              <X size={16} />
             </button>
-            <div className="text-center space-y-2 mb-8">
-              <div className="w-16 h-16 bg-primary/20 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Wallet size={32} />
-              </div>
-              <h3 className="text-2xl font-black text-white">Mulai Perjalananmu</h3>
-              <p className="text-sm text-text-mutedDark leading-relaxed">
-                Grafikmu masih kosong. Ayo masukkan transaksi atau saldo awal pertamamu agar FinBot bisa mulai menganalisis.
+
+            <div className="mb-6">
+              <h3 className="text-xl font-black text-text-mainDark flex items-center gap-2.5">
+                <div className="p-2 bg-primary/10 rounded-xl text-primary"><Wallet size={20} /></div>
+                Catat Transaksi
+              </h3>
+              <p className="text-xs text-text-mutedDark mt-2 leading-relaxed max-w-sm">
+                Masukkan detail finansialmu. Sistem akan mencatat tanggal dan AI akan menebak kategorinya.
               </p>
             </div>
 
-            <form className="space-y-4">
-              <input type="number" placeholder="Nominal (Contoh: 500000)" className="w-full bg-base-dark border border-white/10 px-4 py-3.5 rounded-xl text-white outline-none focus:border-primary text-sm" />
-              <select className="w-full bg-base-dark border border-white/10 px-4 py-3.5 rounded-xl text-white outline-none focus:border-primary text-sm appearance-none">
-                <option value="pemasukan">Pemasukan (Saldo Awal)</option>
-                <option value="pengeluaran">Pengeluaran</option>
-              </select>
-              <input type="text" placeholder="Keterangan (Contoh: Uang Saku)" className="w-full bg-base-dark border border-white/10 px-4 py-3.5 rounded-xl text-white outline-none focus:border-primary text-sm" />
+            {/* AREA ALERT */}
+            {modalError && (
+              <div className="mb-5 flex items-start gap-2.5 bg-danger-light/10 border border-danger-light/30 text-danger-light p-3.5 rounded-xl text-xs font-medium animate-in fade-in">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <p className="leading-relaxed">{modalError}</p>
+              </div>
+            )}
+            {modalSuccess && (
+              <div className="mb-5 flex items-start gap-2.5 bg-accent-light/10 border border-accent-light/30 text-accent-light p-3.5 rounded-xl text-xs font-medium animate-in fade-in">
+                <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
+                <p className="leading-relaxed">{modalSuccess}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleAddTransaction} className="space-y-5">
               
+              <div className="p-1 bg-base-dark border border-border-dark rounded-xl flex">
+                <button
+                  type="button"
+                  onClick={() => setNewTransaction({...newTransaction, type: 'expense'})}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    newTransaction.type === 'expense' 
+                      ? 'bg-danger-light/10 text-danger-light shadow-sm' 
+                      : 'text-text-mutedDark hover:text-text-mainDark'
+                  }`}
+                >
+                  Pengeluaran (-)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewTransaction({...newTransaction, type: 'income'})}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    newTransaction.type === 'income' 
+                      ? 'bg-accent-light/10 text-accent-light shadow-sm' 
+                      : 'text-text-mutedDark hover:text-text-mainDark'
+                  }`}
+                >
+                  Pemasukan (+)
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* INPUT TANGGAL*/}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-text-mutedDark uppercase tracking-wider pl-1">Tanggal</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                    <input 
+                      type="date"
+                      value={newTransaction.date}
+                      onChange={(e) => setNewTransaction({...newTransaction, date: e.target.value})}
+                      required
+                      className="w-full pl-11 pr-4 py-3 bg-base-dark border border-border-dark rounded-xl text-xs text-text-mainDark outline-none focus:border-primary transition-all [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                {/* INPUT NOMINAL  */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-text-mutedDark uppercase tracking-wider pl-1">Nominal</label>
+                  <div className="relative">
+
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-mutedDark font-bold text-[11px]">Rp</span>
+                    <input 
+                      type="number"
+                      placeholder="0"
+                      value={newTransaction.amount}
+                      onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-base-dark border border-border-dark rounded-xl text-xs text-text-mainDark outline-none focus:border-primary transition-all placeholder:text-text-mutedDark/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-text-mutedDark uppercase tracking-wider pl-1">Keterangan Aktivitas</label>
+                <div className="relative">
+                  <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mutedDark" />
+                  <input 
+                    type="text"
+                    placeholder="Contoh: Beli kopi susu, Gaji bulanan, Bensin..."
+                    value={newTransaction.description}
+                    onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
+                    required
+                    className="w-full pl-11 pr-4 py-3 bg-base-dark border border-border-dark rounded-xl text-xs text-text-mainDark outline-none focus:border-primary transition-all placeholder:text-text-mutedDark/50"
+                  />
+                </div>
+              </div>
+
               <button 
-                type="button" 
-                onClick={() => setShowWelcomeModal(false)} 
-                className="w-full bg-primary text-white font-bold py-4 rounded-xl mt-4 hover:-translate-y-1 shadow-[0_10px_20px_rgba(22,128,255,0.3)] transition-all cursor-pointer"
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-primary text-text-mainDark font-bold py-3.5 rounded-xl text-xs shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all mt-4 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Simpan Transaksi Pertama
+                {isLoading && !modalSuccess ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-text-mainDark/30 border-t-text-mainDark rounded-full animate-spin" />
+                    Memproses...
+                  </>
+                ) : 'Simpan Transaksi'}
               </button>
             </form>
           </div>
         </div>
       )}
-
-      {/* --- FLOATING ACTION BUTTON FINBOT (MOBILE) --- */}
-      {/* Hapus animasi bounce agar lebih elegan */}
-      <button 
-        onClick={() => setActiveTab('finbot')}
-        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(22,128,255,0.5)] border-2 border-base-dark z-40 active:scale-95 transition-transform"
-      >
-        <Bot size={24} />
-      </button>
-
-      {/* --- NAVIGATION NAV BAR MOBILE --- */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card-dark/95 backdrop-blur-xl border-t border-white/5 px-6 py-3 flex justify-between items-center z-50 md:hidden">
-        {menuItems.filter(item => item.id !== 'finbot').map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                isActive ? 'text-primary' : 'text-text-mutedDark'
-              }`}
-            >
-              <Icon size={20} />
-              <span className="text-[9px] font-black uppercase tracking-wider">{item.label}</span>
-              {isActive && <div className="w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#1680FF]"></div>}
-            </button>
-          );
-        })}
-      </nav>
 
     </div>
   );
