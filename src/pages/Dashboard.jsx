@@ -211,9 +211,6 @@ const Dashboard = ({ onLogout }) => {
                 {activeTab === 'stats' && 'Laporan & Tren AI'}
                 {activeTab === 'vault' && 'Pusat Alokasi Anggaran'}
               </h2>
-              <span className="text-[9px] bg-primary/10 border border-primary/20 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-wide flex items-center gap-1">
-                <Sparkles size={8} /> LIVE
-              </span>
             </div>
           </div>
 
