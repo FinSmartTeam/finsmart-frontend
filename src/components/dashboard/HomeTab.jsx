@@ -8,21 +8,21 @@ const HomeTab = ({ transactions = [], totalSaldo = 0, totalPemasukan = 0, totalP
       
       {/* KARTU KEUNGGULAN UTAMA */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 bg-card-dark border border-border-dark rounded-2xl space-y-4">
+        <div className="p-6 bg-card-light border border-border-light shadow-sm rounded-2xl space-y-4 hover:shadow-md transition-shadow">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Total Saldo</span>
+            <span className="text-xs font-bold text-text-mutedLight uppercase tracking-wider">Total Saldo</span>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Wallet className="text-primary" size={16} />
             </div>
           </div>
-          <p className="text-2xl font-black text-text-mainDark">
+          <p className="text-2xl font-black text-text-mainLight">
             Rp {Number(totalSaldo || 0).toLocaleString('id-ID')}
           </p>
         </div>
 
-        <div className="p-6 bg-card-dark border border-border-dark rounded-2xl space-y-4">
+        <div className="p-6 bg-card-light border border-border-light shadow-sm rounded-2xl space-y-4 hover:shadow-md transition-shadow">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Pemasukan</span>
+            <span className="text-xs font-bold text-text-mutedLight uppercase tracking-wider">Pemasukan</span>
             <div className="w-8 h-8 rounded-full bg-accent-light/10 flex items-center justify-center">
               <ArrowUpRight className="text-accent-light" size={16} />
             </div>
@@ -32,9 +32,9 @@ const HomeTab = ({ transactions = [], totalSaldo = 0, totalPemasukan = 0, totalP
           </p>
         </div>
 
-        <div className="p-6 bg-card-dark border border-border-dark rounded-2xl space-y-4">
+        <div className="p-6 bg-card-light border border-border-light shadow-sm rounded-2xl space-y-4 hover:shadow-md transition-shadow">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-text-mutedDark uppercase tracking-wider">Pengeluaran</span>
+            <span className="text-xs font-bold text-text-mutedLight uppercase tracking-wider">Pengeluaran</span>
             <div className="w-8 h-8 rounded-full bg-danger-light/10 flex items-center justify-center">
               <ArrowDownLeft className="text-danger-light" size={16} />
             </div>
@@ -48,23 +48,23 @@ const HomeTab = ({ transactions = [], totalSaldo = 0, totalPemasukan = 0, totalP
       {/* WORKSPACE AREA TENGAH */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div className="p-6 bg-card-dark border border-border-dark rounded-3xl flex flex-col min-h-75">
-          <h4 className="text-sm font-bold text-text-mainDark mb-4 border-b border-border-dark pb-3">Ringkasan Aktivitas</h4>
-          <div className="flex-1 bg-base-dark border border-dashed border-border-dark rounded-2xl text-center flex flex-col justify-center items-center space-y-2 p-4">
-            <BarChart3 size={36} className="text-text-mutedDark opacity-30 mb-2" />
-            <p className="text-text-mainDark text-sm font-bold">Visualisasi Tren AI</p>
-            <p className="text-text-mutedDark text-xs max-w-xs">Grafik alokasi otomatis akan aktif mendeteksi transaksi barumu.</p>
+        <div className="p-6 bg-card-light border border-border-light shadow-sm rounded-3xl flex flex-col min-h-75">
+          <h4 className="text-sm font-bold text-text-mainLight mb-4 border-b border-border-light pb-3">Ringkasan Aktivitas</h4>
+          <div className="flex-1 bg-base-light border border-dashed border-border-light rounded-2xl text-center flex flex-col justify-center items-center space-y-2 p-4">
+            <BarChart3 size={36} className="text-text-mutedLight opacity-30 mb-2" />
+            <p className="text-text-mainLight text-sm font-bold">Visualisasi Tren AI</p>
+            <p className="text-text-mutedLight text-xs max-w-xs font-medium">Grafik alokasi otomatis akan aktif mendeteksi transaksi barumu.</p>
           </div>
         </div>
 
-        <div className="p-6 bg-card-dark border border-border-dark rounded-3xl flex flex-col min-h-75">
-          <h4 className="text-sm font-bold text-text-mainDark mb-4 border-b border-border-dark pb-3">Riwayat Transaksi Terbaru</h4>
+        <div className="p-6 bg-card-light border border-border-light shadow-sm rounded-3xl flex flex-col min-h-75">
+          <h4 className="text-sm font-bold text-text-mainLight mb-4 border-b border-border-light pb-3">Riwayat Transaksi Terbaru</h4>
           
           <div className="flex-1 overflow-y-auto max-h-80 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {safeTransactions.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center space-y-3 opacity-60 min-h-37.5">
-                <Clock size={32} className="text-text-mutedDark" />
-                <p className="text-xs text-text-mutedDark italic">Belum ada aktivitas finansial tercatat.</p>
+                <Clock size={32} className="text-text-mutedLight" />
+                <p className="text-xs text-text-mutedLight italic font-medium">Belum ada aktivitas finansial tercatat.</p>
               </div>
             ) : (
               safeTransactions.map((tx, index) => {
@@ -74,14 +74,14 @@ const HomeTab = ({ transactions = [], totalSaldo = 0, totalPemasukan = 0, totalP
                 const txDate = tx.transactionDate || tx.date || tx.tanggal || tx.createdAt;
                 
                 return (
-                  <div key={tx.id || index} className="flex justify-between items-center bg-base-dark border border-border-dark p-3.5 rounded-xl hover:bg-white/5 transition-all">
+                  <div key={tx.id || index} className="flex justify-between items-center bg-base-light border border-border-light p-3.5 rounded-xl hover:bg-border-light/40 transition-all">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isIncome ? 'bg-accent-light/10 text-accent-light' : 'bg-danger-light/10 text-danger-light'}`}>
                         {isIncome ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-text-mainDark truncate">{tx.description || 'Tanpa Judul'}</p>
-                        <p className="text-[10px] text-text-mutedDark truncate mt-0.5">
+                        <p className="text-sm font-bold text-text-mainLight truncate">{tx.description || 'Tanpa Judul'}</p>
+                        <p className="text-[10px] text-text-mutedLight font-medium truncate mt-0.5">
                           {tx.category || 'Lainnya'} • {txDate ? new Date(txDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Hari ini'}
                         </p>
                       </div>
