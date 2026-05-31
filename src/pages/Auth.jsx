@@ -172,33 +172,38 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-dark text-text-mainDark font-sans flex md:grid md:grid-cols-2">
+    <div className="min-h-screen bg-base-light text-text-mainLight font-sans flex md:grid md:grid-cols-2">
       
       {/* Branding Area Desktop */}
-      <div className="hidden md:flex flex-col justify-center px-20 bg-card-dark/30 border-r border-white/5">
+      <div className="hidden md:flex flex-col justify-center px-20 bg-card-light border-r border-border-light shadow-xs z-10">
         <div className="max-w-md space-y-6">
-          <img src={logo} alt="FinSmart" className="h-10 mb-8 cursor-pointer" onClick={() => navigate('/')} />
-          <h2 className="text-5xl font-extrabold text-white leading-tight">
+          <img src={logo} alt="FinSmart" className="h-10 mb-8 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/')} />
+          <h2 className="text-5xl font-extrabold text-text-mainLight leading-tight">
             Kelola Keuangan <br />
             <span className="text-primary text-4xl font-medium">Tanpa Ribet.</span>
           </h2>
-          <p className="text-text-mutedDark text-lg leading-relaxed">
+          <p className="text-text-mutedLight text-lg leading-relaxed">
             Mulai langkah cerdasmu hari ini. Bergabung dengan komunitas yang melek finansial dengan bantuan teknologi AI.
           </p>
         </div>
       </div>
 
       {/* Area Form */}
-      <div className="flex-1 flex items-center justify-center px-8 py-10 bg-base-dark">
+      <div className="flex-1 flex items-center justify-center px-8 py-10 bg-base-light">
         <div className="w-full max-w-md space-y-8">
           
           <div className="text-center space-y-2">
-            <h3 className="text-2xl font-bold text-white tracking-tight">
-              {authMode === 'login' && 'Selamat Datang'}
+            {/* Logo untuk versi mobile */}
+            <div className="md:hidden flex justify-center mb-6">
+               <img src={logo} alt="FinSmart" className="h-8 cursor-pointer" onClick={() => navigate('/')} />
+            </div>
+            
+            <h3 className="text-2xl font-black text-text-mainLight tracking-tight">
+              {authMode === 'login' && 'Selamat Datang Kembali'}
               {authMode === 'register' && 'Daftar Akun Baru'}
               {authMode === 'activation' && 'Verifikasi Email'}
             </h3>
-            <p className="text-sm text-text-mutedDark">
+            <p className="text-sm text-text-mutedLight font-medium">
               {authMode === 'login' && 'Masukkan email dan sandi Anda untuk melanjutkan.'}
               {authMode === 'register' && 'Lengkapi data di bawah ini untuk mendapatkan akses penuh.'}
               {authMode === 'activation' && `Kami telah mengirimkan 6 digit OTP ke ${formData.email || 'email Anda'}.`}
@@ -207,24 +212,24 @@ const Auth = () => {
 
           {/* Alert Error / Success dari Server */}
           {errorMessage && (
-            <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 text-red-500 p-4 rounded-xl text-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3 bg-danger-light/10 border border-danger-light/20 text-danger-light p-4 rounded-xl text-sm animate-in fade-in slide-in-from-top-2">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <p className="leading-relaxed">{errorMessage}</p>
+              <p className="leading-relaxed font-medium">{errorMessage}</p>
             </div>
           )}
 
           {successMessage && (
-            <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/30 text-green-500 p-4 rounded-xl text-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3 bg-accent-light/10 border border-accent-light/20 text-accent-light p-4 rounded-xl text-sm animate-in fade-in slide-in-from-top-2">
               <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-              <p className="leading-relaxed">{successMessage}</p>
+              <p className="leading-relaxed font-medium">{successMessage}</p>
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             
             {authMode === 'register' && (
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-mutedDark" />
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-mutedLight group-focus-within:text-primary transition-colors" />
                 <input 
                   type="text" 
                   name="fullName"
@@ -232,7 +237,7 @@ const Auth = () => {
                   onChange={handleChange}
                   placeholder="Nama Lengkap" 
                   required
-                  className="w-full pl-12 pr-4 py-3.5 bg-card-dark border border-white/10 rounded-xl text-sm text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 bg-card-light border border-border-light rounded-xl text-sm text-text-mainLight outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-text-mutedLight/50 shadow-xs"
                 />
               </div>
             )}
@@ -240,8 +245,8 @@ const Auth = () => {
             {/* INPUT EMAIL */}
             {authMode !== 'activation' && (
               <div className="space-y-1">
-                <div className="relative">
-                  <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${fieldErrors.email ? 'text-red-500' : 'text-text-mutedDark'}`} />
+                <div className="relative group">
+                  <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors.email ? 'text-danger-light' : 'text-text-mutedLight group-focus-within:text-primary'}`} />
                   <input 
                     type="email" 
                     name="email"
@@ -249,17 +254,15 @@ const Auth = () => {
                     onChange={handleChange}
                     placeholder="nama@email.com" 
                     required
-                    // Ubah border menjadi merah jika ada error
-                    className={`w-full pl-12 pr-4 py-3.5 bg-card-dark border rounded-xl text-sm text-white outline-none transition-all ${
+                    className={`w-full pl-12 pr-4 py-3.5 bg-card-light border rounded-xl text-sm text-text-mainLight outline-none transition-all placeholder:text-text-mutedLight/50 shadow-xs ${
                       fieldErrors.email 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-white/10 focus:border-primary focus:ring-1 focus:ring-primary/50'
+                      ? 'border-danger-light focus:border-danger-light focus:ring-2 focus:ring-danger-light/20' 
+                      : 'border-border-light focus:border-primary focus:ring-2 focus:ring-primary/20'
                     }`}
                   />
                 </div>
-                {/* Teks Error Email Mengambang */}
                 {fieldErrors.email && (
-                  <p className="text-red-500 text-xs pl-2 animate-in slide-in-from-top-1">{fieldErrors.email}</p>
+                  <p className="text-danger-light text-xs pl-2 font-medium animate-in slide-in-from-top-1">{fieldErrors.email}</p>
                 )}
               </div>
             )}
@@ -268,7 +271,7 @@ const Auth = () => {
             {authMode !== 'activation' && (
               <div className="space-y-1">
                 <div className="relative group">
-                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${fieldErrors.password ? 'text-red-500' : 'text-text-mutedDark'}`} />
+                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors.password ? 'text-danger-light' : 'text-text-mutedLight group-focus-within:text-primary'}`} />
                   <input 
                     type={showPassword ? "text" : "password"} 
                     name="password"
@@ -276,29 +279,28 @@ const Auth = () => {
                     onChange={handleChange}
                     placeholder="Kata Sandi" 
                     required
-                    className={`w-full pl-12 pr-12 py-3.5 bg-card-dark border rounded-xl text-sm text-white outline-none transition-all ${
+                    className={`w-full pl-12 pr-12 py-3.5 bg-card-light border rounded-xl text-sm text-text-mainLight outline-none transition-all placeholder:text-text-mutedLight/50 shadow-xs ${
                       fieldErrors.password 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-white/10 focus:border-primary focus:ring-1 focus:ring-primary/50'
+                      ? 'border-danger-light focus:border-danger-light focus:ring-2 focus:ring-danger-light/20' 
+                      : 'border-border-light focus:border-primary focus:ring-2 focus:ring-primary/20'
                     }`}
                   />
                   <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-mutedDark hover:text-white transition-colors cursor-pointer"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-mutedLight hover:text-text-mainLight transition-colors cursor-pointer"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 
-                {/* Teks Error / Instruksi Password */}
                 {fieldErrors.password ? (
-                  <p className="text-red-500 text-xs pl-2 animate-in slide-in-from-top-1">{fieldErrors.password}</p>
+                  <p className="text-danger-light text-xs pl-2 font-medium animate-in slide-in-from-top-1">{fieldErrors.password}</p>
                 ) : (
                   authMode === 'register' && (
-                    <div className="flex items-center gap-1.5 text-text-mutedDark pl-2 mt-1">
+                    <div className="flex items-center gap-1.5 text-text-mutedLight pl-2 mt-1.5">
                       <Info size={13} className="text-primary shrink-0" />
-                      <span className="text-[11px] leading-none">
+                      <span className="text-[11px] leading-none font-medium">
                         Minimal 8 karakter (Wajib ada huruf BESAR, kecil, dan angka).
                       </span>
                     </div>
@@ -311,7 +313,7 @@ const Auth = () => {
             {authMode === 'register' && (
               <div className="space-y-1">
                 <div className="relative group">
-                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${fieldErrors.confirmPassword ? 'text-red-500' : 'text-text-mutedDark'}`} />
+                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors.confirmPassword ? 'text-danger-light' : 'text-text-mutedLight group-focus-within:text-primary'}`} />
                   <input 
                     type={showConfirmPassword ? "text" : "password"} 
                     name="confirmPassword"
@@ -319,27 +321,27 @@ const Auth = () => {
                     onChange={handleChange}
                     placeholder="Konfirmasi Kata Sandi" 
                     required
-                    className={`w-full pl-12 pr-12 py-3.5 bg-card-dark border rounded-xl text-sm text-white outline-none transition-all ${
+                    className={`w-full pl-12 pr-12 py-3.5 bg-card-light border rounded-xl text-sm text-text-mainLight outline-none transition-all placeholder:text-text-mutedLight/50 shadow-xs ${
                       fieldErrors.confirmPassword 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50' 
-                      : 'border-white/10 focus:border-primary focus:ring-1 focus:ring-primary/50'
+                      ? 'border-danger-light focus:border-danger-light focus:ring-2 focus:ring-danger-light/20' 
+                      : 'border-border-light focus:border-primary focus:ring-2 focus:ring-primary/20'
                     }`}
                   />
                    <button 
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-mutedDark hover:text-white transition-colors cursor-pointer"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-mutedLight hover:text-text-mainLight transition-colors cursor-pointer"
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {/* Teks Error Confirm Password */}
                 {fieldErrors.confirmPassword && (
-                  <p className="text-red-500 text-xs pl-2 animate-in slide-in-from-top-1">{fieldErrors.confirmPassword}</p>
+                  <p className="text-danger-light text-xs pl-2 font-medium animate-in slide-in-from-top-1">{fieldErrors.confirmPassword}</p>
                 )}
               </div>
             )}
 
+            {/* KOTAK OTP (Saat Mode Aktivasi) */}
             {authMode === 'activation' && (
               <div className="flex justify-between gap-2 mb-6">
                 {otpArray.map((data, index) => (
@@ -351,7 +353,7 @@ const Auth = () => {
                     onChange={(e) => handleOtpChange(e.target, index)}
                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
                     onFocus={(e) => e.target.select()}
-                    className="w-12 h-14 bg-card-dark border border-white/10 rounded-xl text-center text-xl font-bold text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all"
+                    className="w-12 h-14 bg-card-light border border-border-light rounded-xl text-center text-xl font-bold text-text-mainLight outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all shadow-xs"
                   />
                 ))}
               </div>
@@ -360,7 +362,7 @@ const Auth = () => {
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+              className="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex justify-center items-center gap-2 mt-2"
             >
               {isLoading ? (
                 <>
@@ -375,11 +377,11 @@ const Auth = () => {
           </form>
 
           {authMode !== 'activation' && (
-            <p className="text-center text-sm text-text-mutedDark mt-6">
+            <p className="text-center text-sm text-text-mutedLight font-medium mt-6">
               {authMode === 'login' ? "Belum punya akun? " : "Sudah memiliki akun? "}
               <span 
                 onClick={() => switchMode(authMode === 'login' ? 'register' : 'login')}
-                className="text-primary font-semibold cursor-pointer hover:underline"
+                className="text-primary font-bold cursor-pointer hover:underline"
               >
                 {authMode === 'login' ? 'Daftar Gratis' : 'Masuk di sini'}
               </span>

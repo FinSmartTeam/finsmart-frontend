@@ -8,13 +8,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: { light: '#f4f7fe', dark: '#0a0c10' },
-        card: { light: '#ffffff', dark: '#181b28' },
-        primary: '#1680FF',
-        accent: { light: '#00c853', dark: '#39FF14' },
-        danger: { light: '#e60039', dark: '#ff3366' },
-        text: { mainLight: '#1b1b1b', mainDark: '#ffffff', mutedLight: '#6c757d', mutedDark: '#8b949e' },
-        border: { light: '#e0e5f2', dark: '#2d313f' }
+        base: { 
+          light: '#F8FAFC', // White (Slate 50)
+          dark: '#0A0C10' 
+        },
+        card: { 
+          light: '#FFFFFF', // White
+          dark: '#181B28' 
+        },
+        primary: '#1680FF', // Blue
+        accent: { 
+          light: '#10B981', // Emerald
+          dark: '#34D399' 
+        },
+        danger: { 
+          light: '#E60039', 
+          dark: '#FF3366' 
+        },
+        text: { 
+          mainLight: '#0F172A',  // Slate dark
+          mainDark: '#FFFFFF', 
+          mutedLight: '#64748B', // Abu-abu for decription
+          mutedDark: '#8B949E' 
+        },
+        border: { 
+          light: '#E2E8F0', // outline abu-abu
+          dark: '#2D313F' 
+        }
       }
     },
   },
