@@ -1,39 +1,44 @@
-const BottomNav = () => {
-  // Data navigasi agar mudah dikelola
-  const navItems = [
-    { id: 1, label: 'Home', icon: '🏠', active: true },
-    { id: 2, label: 'Stats', icon: '📊', active: false },
-    { id: 3, label: 'Vault', icon: '🎯', active: false },
-    { id: 4, label: 'User', icon: '👤', active: false },
+import { LayoutDashboard, BarChart3, Wallet, Plus } from 'lucide-react';
+
+const BottomNav = ({ activeTab, setActiveTab, onAddClick }) => {
+  const menuItems = [
+    { id: 'home', icon: LayoutDashboard },
+    { id: 'stats', icon: BarChart3 },
+    { id: 'vault', icon: Wallet },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card-dark/80 backdrop-blur-xl border-t border-border-dark px-6 py-3 flex justify-between items-center z-50">
-      {navItems.map((item) => (
-        <button
-          key={item.id}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            item.active ? 'text-primary' : 'text-text-mutedDark'
-          }`}
-        >
-          <span className="text-xl">{item.icon}</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">
-            {item.label}
-          </span>
-          {/* Indikator Aktif */}
-          {item.active && (
-            <div className="w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#1680FF]"></div>
-          )}
-        </button>
-      ))}
+    <div className="fixed bottom-4 left-0 right-0 z-40 md:hidden px-4 bg-transparent pointer-events-none">
+      <div className="flex items-center justify-between bg-card-light/95 backdrop-blur-xl border border-border-light/80 p-2 px-3 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] pointer-events-auto max-w-sm mx-auto">
 
-      {/* Floating Action Button (FAB) untuk Tambah Transaksi */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-        <button className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(22,128,255,0.5)] border-4 border-base-dark active:scale-90 transition-transform">
-          +
+        {/* Navigasi */}
+        <div className="flex flex-1 items-center justify-center gap-6 sm:gap-8">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer ${activeTab === item.id
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-text-mutedLight hover:text-text-mainLight'
+                }`}
+            >
+              <item.icon size={22} className={activeTab === item.id ? "stroke-[2.5px]" : "stroke-2"} />
+            </button>
+          ))}
+        </div>
+
+        {/* Line Pemisah  */}
+        <div className="w-px h-8 bg-border-light mx-2"></div>
+
+        {/* Btn Tambah Transaksi */}
+        <button
+          onClick={onAddClick}
+          className="w-11 h-11 shrink-0 bg-primary text-white rounded-xl flex items-center justify-center shadow-[0_4px_14px_rgba(22,128,255,0.3)] active:scale-95 transition-transform cursor-pointer"
+        >
+          <Plus size={20} className="stroke-[3px]" />
         </button>
       </div>
-    </nav>
+    </div>
   );
 };
 
