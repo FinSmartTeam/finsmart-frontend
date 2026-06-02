@@ -11,11 +11,9 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-base-dark">
         <Routes>
-
           <Route path="/" element={<LandingPage />} />
-
           <Route path="/auth" element={<Auth />} />
-
+          
           <Route 
             path="/dashboard" 
             element={
