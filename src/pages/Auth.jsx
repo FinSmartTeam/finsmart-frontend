@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import logo from '../assets/logo.svg';
 import api from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -166,6 +167,32 @@ const Auth = () => {
         }
       }
       setErrorMessage(finalErrorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      const response = await api.post('/auth/google', {
+        idToken: credentialResponse.credential
+      });
+
+      const token = response.data?.data?.token || response.data?.token; 
+      
+      if (token) {
+        localStorage.setItem('finSmart_token', token);
+        navigate('/dashboard');
+      } else {
+        throw new Error('Gagal mengambil sesi login. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('Google Auth Error:', error);
+      setErrorMessage(error.response?.data?.message || 'Gagal masuk dengan Google. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -375,6 +402,25 @@ const Auth = () => {
               )}
             </button>
           </form>
+
+          {authMode !== 'activation' && (
+            <>
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-border-light"></div>
+                <span className="text-xs text-text-mutedLight font-medium uppercase tracking-wider">Atau lanjutkan dengan</span>
+                <div className="flex-1 h-px bg-border-light"></div>
+              </div>
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setErrorMessage('Login Google gagal. Silakan coba lagi.')}
+                  shape="rectangular"
+                  size="large"
+                  text={authMode === 'login' ? "signin_with" : "signup_with"}
+                />
+              </div>
+            </>
+          )}
 
           {authMode !== 'activation' && (
             <p className="text-center text-sm text-text-mutedLight font-medium mt-6">
