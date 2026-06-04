@@ -100,7 +100,6 @@ const HeroBlobs = () => (
 );
 
 // Main Component 
-
 const LandingPage = () => {
   const navigate = useNavigate();
 
