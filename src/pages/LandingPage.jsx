@@ -100,7 +100,6 @@ const HeroBlobs = () => (
 );
 
 // Main Component 
-
 const LandingPage = () => {
   const navigate = useNavigate();
 
@@ -309,7 +308,6 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
-
       {/* FOOTER */}
       <motion.footer
         ref={footerRef}
