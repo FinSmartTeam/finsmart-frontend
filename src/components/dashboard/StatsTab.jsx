@@ -43,8 +43,9 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
   const [aiInvestment, setAiInvestment] = useState(null);
   const [financialProfile, setFinancialProfile] = useState({ totalSavings: 0 });
   const [apiBarData, setApiBarData] = useState([]);
-  const [isAiLoading, setIsAiLoading] = useState(true);
+  const [isAiLoading, setIsAiLoading] = useState(true); // State loading untuk AI
 
+  // Kalkulasi manual berdasarkan filter bulan
   const income = summaryStats?.totalPemasukan || 0;
   const expense = summaryStats?.totalPengeluaran || 0;
   const savings = income - expense;
@@ -63,9 +64,10 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
   useEffect(() => {
     const fetchAnalytics = async () => {
       setIsAiLoading(true);
+      setAiBehavior(null); 
+      setAiInvestment(null);
+      
       try {
-        setAiBehavior(null); setAiInvestment(null);
-        
         let profSavings = 0;
         try {
           const profRes = await api.get('/financial-profile');
@@ -73,15 +75,26 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
           setFinancialProfile({ totalSavings: profSavings });
         } catch (e) {}
 
+        const aiParams = new URLSearchParams({
+          month: selectedMonth,
+          year: selectedYear,
+          Income: income,
+          Needs: needs,
+          Wants: wants,
+          Savings: savings,
+          Total_Spending: expense,
+          Financial_Balance: profSavings
+        }).toString();
+
         try {
-          const behaviorRes = await api.get(`/insights/behavior?month=${selectedMonth}&year=${selectedYear}&income=${income}&needs=${needs}&wants=${wants}&savings=${savings}`).catch(() => ({ data: null }));
+          const behaviorRes = await api.get(`/insights/behavior?${aiParams}`).catch(() => ({ data: null }));
           if (behaviorRes.data) {
              setAiBehavior(behaviorRes.data?.data?.insight || behaviorRes.data?.behavior);
           }
         } catch (e) {}
 
         try {
-          const investRes = await api.get(`/insights/rekomendasi?month=${selectedMonth}&year=${selectedYear}&total_savings=${profSavings}&monthly_income=${income}&monthly_expense=${expense}`).catch(() => ({ data: null }));
+          const investRes = await api.get(`/insights/rekomendasi?${aiParams}`).catch(() => ({ data: null }));
           if (investRes.data) {
              setAiInvestment(investRes.data?.data?.insight || investRes.data?.rekomendasi);
           }
@@ -100,12 +113,17 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
     if (selectedMonth && selectedYear) fetchAnalytics();
   }, [selectedMonth, selectedYear, refreshTrigger, income, expense, wants, needs, savings]);
 
+  // FALLBACK OFFLINE: Jika AI gagal/error, hitungan lokal yang dipakai
   const calculatedBehavior = useMemo(() => {
     if (aiBehavior) return aiBehavior; 
+    
     if (income === 0 && expense === 0) return "Belum Ada Data";
     if (income === 0 && expense > 0) return "Boros";
-    if ((savings/income) > 0.2 && (wants/income) < 0.3) return "Hemat";
-    if ((savings/income) < 0.2 && (wants/income) > 0.3) return "Boros";
+    
+    if (income > 0) {
+      if ((savings/income) > 0.2 && (wants/income) < 0.3) return "Hemat";
+      if ((savings/income) < 0.2 || (wants/income) > 0.3) return "Boros";
+    }
     return "Normal";
   }, [aiBehavior, income, expense, savings, wants]);
 
@@ -185,7 +203,10 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
           </div>
           <div className="overflow-hidden">
             <p className="text-[10px] md:text-xs font-bold text-text-mutedLight uppercase tracking-widest mb-0.5">Perilaku</p>
-            <p className={`text-base md:text-lg font-black truncate text-text-mainLight group-hover:${behaviorUI.color} transition-colors`}>{behaviorUI.text}</p>
+            <p className={`text-base md:text-lg font-black truncate text-text-mainLight group-hover:${behaviorUI.color} transition-colors`}>
+              {/* Efek Loading Menganalisis... */}
+              {isAiLoading ? <span className="text-sm font-medium animate-pulse text-text-mutedLight">Menganalisis...</span> : behaviorUI.text}
+            </p>
           </div>
         </div>
 
@@ -195,7 +216,10 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
           </div>
           <div className="overflow-hidden">
             <p className="text-[10px] md:text-xs font-bold text-text-mutedLight uppercase tracking-widest mb-0.5">Investasi</p>
-            <p className={`text-base md:text-lg font-black truncate text-text-mainLight group-hover:${investmentUI.color} transition-colors`}>{investmentUI.text}</p>
+            <p className={`text-base md:text-lg font-black truncate text-text-mainLight group-hover:${investmentUI.color} transition-colors`}>
+              {/* Efek Loading Menganalisis... */}
+              {isAiLoading ? <span className="text-sm font-medium animate-pulse text-text-mutedLight">Menganalisis...</span> : investmentUI.text}
+            </p>
           </div>
         </div>
 
@@ -217,7 +241,7 @@ const StatsTab = ({ summaryStats, categoryStats = [], allTransactions = [], sele
         <h4 className="text-sm font-bold text-text-mainLight mb-4 flex items-center gap-2">Tren Arus Kas</h4>
         
         <div className="w-full overflow-x-auto pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-border-light [&::-webkit-scrollbar-track]:bg-transparent">
-          <div className="min-w-162.5 w-full" style={{ height: '300px' }}>
+          <div className="min-w-[650px] w-full" style={{ height: '300px' }}>
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
